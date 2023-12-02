@@ -1,7 +1,15 @@
 #[cfg(feature = "sample")]
+#[cfg(not(feature = "part2"))]
 const DATA: &str = include_str!("../sample.txt");
+#[cfg(all(feature = "sample", feature = "part2"))]
+const DATA: &str = include_str!("../sample-part2.txt");
 #[cfg(not(feature = "sample"))]
 const DATA: &str = include_str!("../input.txt");
+
+#[allow(dead_code)]
+const WORDS: &[&str; 9] = &[
+  "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+];
 
 fn main() -> Result<(), String> {
   let data = extract()?;
@@ -18,50 +26,80 @@ fn src_provider() -> Result<String, String> {
 fn extract() -> Result<Vec<Vec<char>>, String> {
   Ok(
     src_provider()?
-      .split('\n')
-      .map(|s: &str| s.chars().collect::<Vec<_>>())
+      .lines()
+      .map(|line: &str| line.chars().collect::<Vec<_>>())
       .collect::<Vec<_>>(),
   )
 }
 
-fn transform(data: Vec<Vec<char>>) -> Result<usize, String> {
+#[allow(unused_mut)]
+fn transform(mut data: Vec<Vec<char>>) -> Result<usize, String> {
+  #[cfg(feature = "part2")]
+  {
+    data = part2(&data)?;
+  }
+
   let mut sum = 0;
 
   for line in data {
-    let mut left_index = 0;
-    let mut right_index = line.len().saturating_sub(1);
-
-    while left_index <= right_index {
-      if let (Some(left), Some(right)) =
-        (line.get(left_index), line.get(right_index))
-      {
-        if left.is_numeric() && right.is_numeric() {
-          if let Ok(num) = format!("{}{}", left, right).parse::<usize>() {
-            sum += num;
-            break;
-          } else {
-            unreachable!()
-          }
-        }
-      }
-
-      if !line.get(left_index).map_or(false, |c| c.is_numeric()) {
-        left_index += 1;
-      }
-      if !line.get(right_index).map_or(false, |c| c.is_numeric()) {
-        right_index -= 1;
-      }
-    }
-
-    if left_index > right_index {
+    let Some(num) = process_line(&line) else {
       return Err(format!(
         "Could not produce a string from '{}'",
         line.iter().collect::<String>()
       ));
-    }
+    };
+    sum += num;
   }
 
   Ok(sum)
+}
+
+#[cfg(feature = "part2")]
+fn part2(data: &[Vec<char>]) -> Result<Vec<Vec<char>>, String> {
+  let recomposed: Vec<String> = data
+    .iter()
+    .map(|chars| {
+      let mut line = chars.iter().collect::<String>();
+      WORDS.iter().enumerate().for_each(|(i, word)| {
+        line = line.replace(word, &format!("{word}{}{word}", (i + 1)))
+      });
+
+      line
+    })
+    .collect();
+
+  let new_data: Vec<Vec<char>> =
+    recomposed.iter().map(|s| s.chars().collect()).collect();
+
+  Ok(new_data)
+}
+
+fn process_line(chars: &[char]) -> Option<usize> {
+  let mut left_index = 0;
+  let mut right_index = chars.len().saturating_sub(1);
+
+  while left_index <= right_index {
+    if let (Some(left), Some(right)) =
+      (chars.get(left_index), chars.get(right_index))
+    {
+      if left.is_numeric() && right.is_numeric() {
+        if let Ok(num) = format!("{}{}", left, right).parse::<usize>() {
+          return Some(num);
+        } else {
+          unreachable!()
+        }
+      }
+
+      if !left.is_numeric() {
+        left_index += 1;
+      }
+      if !right.is_numeric() {
+        right_index -= 1;
+      }
+    }
+  }
+
+  None
 }
 
 fn load(result: Result<usize, String>) -> Result<(), String> {
