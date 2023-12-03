@@ -39,6 +39,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "day-2"
+version = "0.1.0"
+dependencies = [
+ "mry",
+]
+
+[[package]]
 name = "instant"
 version = "0.1.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
