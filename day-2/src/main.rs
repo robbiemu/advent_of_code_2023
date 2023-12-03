@@ -74,11 +74,18 @@ impl Set {
     Ok((value, color.to_string()))
   }
 
+  #[allow(dead_code)]
   pub fn is_ge_strict(&self, other: &Self) -> bool {
     self.red > other.red || self.green > other.green || self.blue > other.blue
   }
+
+  #[allow(dead_code)]
+  pub fn power(&self) -> usize {
+    self.red * self.green * self.blue
+  }
 }
 
+#[allow(dead_code)]
 const CONDITIONS: Set = Set { red: 12, green: 13, blue: 14 };
 
 #[derive(PartialEq, Debug)]
@@ -169,11 +176,27 @@ fn transform(data: Vec<Game>) -> Result<Vec<usize>, String> {
     data
       .iter()
       .filter_map(|game| {
-        if game.sets.iter().any(|set| set.is_ge_strict(&CONDITIONS)) {
-          return None;
-        }
+        #[cfg(feature = "part2")]
+        {
+          let minimum = game.sets.iter().fold(
+            Set { red: 0, green: 0, blue: 0 },
+            |acc, set| Set {
+              red: set.red.max(acc.red),
+              green: set.green.max(acc.green),
+              blue: set.blue.max(acc.blue),
+            },
+          );
 
-        Some(game.id)
+          Some(minimum.power())
+        }
+        #[cfg(not(feature = "part2"))]
+        {
+          if game.sets.iter().any(|set| set.is_ge_strict(&CONDITIONS)) {
+            return None;
+          }
+
+          Some(game.id)
+        }
       })
       .collect(),
   )
