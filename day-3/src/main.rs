@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashSet, VecDeque};
 
 
 #[cfg(feature = "sample")]
@@ -88,11 +88,30 @@ fn extract() -> Result<ProblemRepresentation, String> {
 }
 
 fn transform(data: ProblemRepresentation) -> Result<Vec<usize>, String> {
-  let symbol_coords: HashSet<Coord> =
-    data.symbols.iter().map(|s| s.coord).collect();
+  let result: Vec<usize>;
 
+  #[cfg(not(feature = "part2"))]
+  {
+    let symbol_coords: HashSet<Coord> =
+      data.symbols.iter().map(|s| s.coord).collect();
+
+    result = get_adjacent_ranges(&data.ranges, symbol_coords)?;
+  }
+  #[cfg(feature = "part2")]
+  {
+    result = get_gear_ratios(&data)?;
+  }
+
+  Ok(result)
+}
+
+#[allow(dead_code)]
+fn get_adjacent_ranges(
+  ranges: &[Range],
+  symbol_coords: HashSet<Coord>,
+) -> Result<Vec<usize>, String> {
   let mut filtered_ranges = Vec::new();
-  for range in data.ranges {
+  for range in ranges {
     let is_before_in_line = range.start.x > 0
       && symbol_coords
         .contains(&Coord { x: range.start.x - 1, y: range.start.y });
@@ -110,6 +129,46 @@ fn transform(data: ProblemRepresentation) -> Result<Vec<usize>, String> {
   }
 
   Ok(filtered_ranges.iter().map(|range| range.number).collect())
+}
+
+#[allow(dead_code)]
+fn get_gear_ratios(data: &ProblemRepresentation) -> Result<Vec<usize>, String> {
+  Ok(
+    get_gear_ranges(data)?
+      .iter()
+      .map(|(a, b)| a.number * b.number)
+      .collect(),
+  )
+}
+
+#[allow(dead_code)]
+fn get_gear_ranges(
+  data: &ProblemRepresentation,
+) -> Result<Vec<(&Range, &Range)>, String> {
+  let mut gears_and_ranges = Vec::new();
+
+  for symbol in data.symbols.iter().filter(|s| s.symbol == '*') {
+    let mut adjacent_ranges: VecDeque<&Range> = VecDeque::new();
+
+    for range in &data.ranges {
+      if (range.start.x.saturating_sub(1)..=range.end.x + 1)
+        .contains(&symbol.coord.x)
+        && (range.start.y.saturating_sub(1)..=range.end.y + 1)
+          .contains(&symbol.coord.y)
+      {
+        adjacent_ranges.push_back(range);
+      }
+    }
+
+    if adjacent_ranges.len() == 2 {
+      gears_and_ranges.push((
+        adjacent_ranges.pop_front().unwrap(),
+        adjacent_ranges.pop_back().unwrap(),
+      ));
+    }
+  }
+
+  Ok(gears_and_ranges)
 }
 
 fn load(result: Result<Vec<usize>, String>) -> Result<(), String> {
