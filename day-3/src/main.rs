@@ -87,24 +87,6 @@ fn extract() -> Result<ProblemRepresentation, String> {
   Ok(ProblemRepresentation { ranges, symbols })
 }
 
-fn transform(data: ProblemRepresentation) -> Result<Vec<usize>, String> {
-  let result: Vec<usize>;
-
-  #[cfg(not(feature = "part2"))]
-  {
-    let symbol_coords: HashSet<Coord> =
-      data.symbols.iter().map(|s| s.coord).collect();
-
-    result = get_adjacent_ranges(&data.ranges, symbol_coords)?;
-  }
-  #[cfg(feature = "part2")]
-  {
-    result = get_gear_ratios(&data)?;
-  }
-
-  Ok(result)
-}
-
 #[allow(dead_code)]
 fn get_adjacent_ranges(
   ranges: &[Range],
@@ -169,6 +151,24 @@ fn get_gear_ranges(
   }
 
   Ok(gears_and_ranges)
+}
+
+fn transform(data: ProblemRepresentation) -> Result<Vec<usize>, String> {
+  let result: Vec<usize>;
+
+  #[cfg(not(feature = "part2"))]
+  {
+    let symbol_coords: HashSet<Coord> =
+      data.symbols.iter().map(|s| s.coord).collect();
+
+    result = get_adjacent_ranges(&data.ranges, symbol_coords)?;
+  }
+  #[cfg(feature = "part2")]
+  {
+    result = get_gear_ratios(&data)?;
+  }
+
+  Ok(result)
 }
 
 fn load(result: Result<Vec<usize>, String>) -> Result<(), String> {
