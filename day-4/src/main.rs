@@ -4,6 +4,8 @@ use nom::character::complete::{space1, u32 as u32_parser};
 use nom::multi::separated_list0;
 use nom::sequence::{pair, tuple};
 use nom::IResult;
+#[allow(unused_imports)]
+use std::collections::hash_map::Entry::Vacant;
 use std::collections::HashMap;
 
 
@@ -66,19 +68,52 @@ fn extract() -> Result<HashMap<u32, RecordValue>, String> {
 }
 
 fn transform(data: HashMap<u32, RecordValue>) -> Result<Vec<usize>, String> {
-  Ok(
-    data
-      .values()
-      .map(|(left, right)| {
-        let cnt = left.iter().filter(|&n| right.contains(n)).count() as u32;
-        if cnt == 0 {
-          return 0;
-        }
+  #[cfg(not(feature = "part2"))]
+  {
+    Ok(
+      data
+        .values()
+        .map(|(left, right)| {
+          let cnt = left.iter().filter(|&n| right.contains(n)).count() as u32;
+          if cnt == 0 {
+            return 0;
+          }
 
-        2_usize.pow(cnt - 1)
-      })
-      .collect(),
-  )
+          2_usize.pow(cnt - 1)
+        })
+        .collect(),
+    )
+  }
+  #[cfg(feature = "part2")]
+  {
+    let mut sorted_keys: Vec<u32> = data.keys().cloned().collect();
+    sorted_keys.sort(); // Sort the keys by id
+
+    Ok(
+      sorted_keys
+        .iter()
+        .fold(HashMap::<u32, usize>::new(), |mut acc, id| {
+          let (left, right) = data.get(id).unwrap();
+          let cnt = left.iter().filter(|&n| right.contains(n)).count() as u32;
+          if !acc.contains_key(id) {
+            acc.insert(*id, 1);
+          }
+          let times = *acc.get(id).unwrap();
+          (id + 1..id + cnt + 1).for_each(|k| {
+            if let Vacant(e) = acc.entry(k) {
+              e.insert(times + 1);
+            } else {
+              acc.entry(k).and_modify(|e| *e += times).or_insert(times);
+            }
+          });
+
+          acc
+        })
+        .values()
+        .cloned()
+        .collect::<Vec<_>>(),
+    )
+  }
 }
 
 fn load(result: Result<Vec<usize>, String>) -> Result<(), String> {
