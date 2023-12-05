@@ -52,8 +52,7 @@ fn extract() -> Result<HashMap<u32, RecordValue>, String> {
   for line in src_provider()?.lines() {
     match parse_line(line) {
       Ok((_, (id, (left, right)))) => {
-        map.entry(id).or_insert((vec![], vec![])).0.extend(left);
-        map.entry(id).or_insert((vec![], vec![])).1.extend(right);
+        map.insert(id, (left, right));
       }
       Err(err) => {
         return Err(format!(
