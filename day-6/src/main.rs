@@ -23,16 +23,41 @@ fn parse_input(input: String) -> Result<Vec<(i64, i64)>, String> {
     return Err("Invalid input".to_string());
   }
 
-  let times: Vec<i64> = lines[0]
-    .split_whitespace()
-    .skip(1)
-    .map(|s| s.parse().unwrap())
-    .collect();
-  let distances: Vec<i64> = lines[1]
-    .split_whitespace()
-    .skip(1)
-    .map(|s| s.parse().unwrap())
-    .collect();
+  let times: Vec<i64>;
+  let distances: Vec<i64>;
+  #[cfg(not(feature = "part2"))]
+  {
+    times = lines[0]
+      .split_whitespace()
+      .skip(1)
+      .map(|s| s.parse().unwrap())
+      .collect();
+    distances = lines[1]
+      .split_whitespace()
+      .skip(1)
+      .map(|s| s.parse().unwrap())
+      .collect();
+  }
+  #[cfg(feature = "part2")]
+  {
+    let parts: Vec<&str> = lines[0].splitn(2, char::is_whitespace).collect();
+    times = vec![parts[1]
+      .chars()
+      .filter(|&c| !c.is_whitespace())
+      .collect::<String>()
+      .parse::<i64>()
+      .unwrap()];
+
+    let parts: Vec<&str> = lines[1].splitn(2, char::is_whitespace).collect();
+    distances = vec![parts[1]
+      .chars()
+      .filter(|&c| !c.is_whitespace())
+      .collect::<String>()
+      .parse::<i64>()
+      .unwrap()];
+
+    dbg!(&distances);
+  }
 
   Ok(times.into_iter().zip(distances).collect())
 }
@@ -53,11 +78,14 @@ fn find_time_to_threshold(
   let lower_bound = (p1 + 1.0).floor() as isize;
   let upper_bound = (p2 - 1.0).ceil() as isize;
 
+  dbg!((lower_bound, upper_bound));
+
   // Populate solutions within the open interval and filter values above threshold
   Ok((lower_bound..=upper_bound).collect::<Vec<isize>>())
 }
 
 fn transform(data: Vec<(i64, i64)>) -> Result<Vec<Vec<isize>>, String> {
+  dbg!(&data);
   let mut result = vec![];
 
   for (time, threshold) in data {
