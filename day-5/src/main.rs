@@ -26,8 +26,13 @@ type Destination = Range<usize>;
 type Source = Range<usize>;
 type Transformation = (Destination, Source);
 
+#[cfg(not(feature = "part2"))]
+type Seeds = HashSet<usize>;
+#[cfg(feature = "part2")]
+type Seeds = HashSet<(usize, usize)>;
+
 struct ProblemDefinition {
-  seeds: HashSet<usize>,
+  seeds: Seeds,
   transformations: HashMap<(String, String), Vec<Transformation>>,
 }
 
@@ -38,7 +43,7 @@ impl ProblemDefinition {
     stop_at: &str,
     from: &str,
   ) -> usize {
-    // eprintln!("{from_value}: {from} -> {stop_at}");
+    eprintln!("{from_value}: {from} -> {stop_at}");
     if from == stop_at {
       return from_value;
     }
@@ -71,7 +76,7 @@ impl ProblemDefinition {
     (destination, source)
   }
 
-  fn from(seeds: HashSet<usize>, records: &[Record]) -> Self {
+  fn from(seeds: Seeds, records: &[Record]) -> Self {
     let transformations =
       records
         .iter()
@@ -107,7 +112,7 @@ fn parse_usize(input: &str) -> IResult<&str, usize> {
   map(complete::u32, |n| n as usize)(input)
 }
 
-pub fn parse_seeds(input: &str) -> IResult<&str, HashSet<usize>> {
+pub fn parse_seeds(input: &str) -> IResult<&str, Seeds> {
   let (input, (_tag, numbers)) = terminated(
     separated_pair(
       tag("seeds:"),
@@ -159,7 +164,7 @@ pub fn parse_records(input: &str) -> IResult<&str, Vec<Record>> {
   many1(parse_record)(input)
 }
 
-pub fn parse_data(input: &str) -> IResult<&str, (HashSet<usize>, Vec<Record>)> {
+pub fn parse_data(input: &str) -> IResult<&str, (Seeds, Vec<Record>)> {
   // Parses seeds followed by multiple records
   let (input, seeds) = parse_seeds(input)?;
   let (input, records) = parse_records(input)?;
@@ -177,10 +182,9 @@ fn extract() -> Result<ProblemDefinition, String> {
 }
 
 fn transform(problem: ProblemDefinition) -> Result<Vec<usize>, String> {
+  let mut locations: HashMap<usize, usize> = HashMap::new();
   #[cfg(not(feature = "part2"))]
   {
-    let mut locations: HashMap<usize, usize> = HashMap::new();
-
     for seed in &problem.seeds {
       let location = problem.recurse_transformations(*seed, LOCATION, SEED);
       locations.insert(*seed, location);
@@ -190,7 +194,14 @@ fn transform(problem: ProblemDefinition) -> Result<Vec<usize>, String> {
   }
   #[cfg(feature = "part2")]
   {
-    todo!()
+    for seed_range in &problem.seeds {
+      for seed in seed_range.1..seed_range.0 {
+        let location = problem.recurse_transformations(seed, LOCATION, SEED);
+        locations.insert(seed, location);
+      }
+    }
+
+    return Ok(locations.values().cloned().collect::<Vec<_>>());
   }
 }
 
