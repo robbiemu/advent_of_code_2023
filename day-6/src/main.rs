@@ -71,14 +71,14 @@ fn find_time_to_threshold(
   threshold: f64,
 ) -> Result<Vec<isize>, String> {
   // find the open interval above threshold
-  let p1 =
+  let open_lower_bound =
     total_time / 2.0 - ((total_time.powi(2) - 4.0 * threshold).sqrt()) / 2.0;
-  let p2 =
+  let open_upper_bound =
     total_time / 2.0 + ((total_time.powi(2) - 4.0 * threshold).sqrt()) / 2.0;
 
-  // bound to largest and smallest integer
-  let lower_bound = (p1 + 1.0).floor() as isize;
-  let upper_bound = (p2 - 1.0).ceil() as isize;
+  // bind to largest and smallest integer
+  let lower_bound = (open_lower_bound + 1.0).floor() as isize;
+  let upper_bound = (open_upper_bound - 1.0).ceil() as isize;
 
   // Populate solutions within the open interval
   Ok((lower_bound..=upper_bound).collect::<Vec<isize>>())
