@@ -70,22 +70,21 @@ fn find_time_to_threshold(
   total_time: f64,
   threshold: f64,
 ) -> Result<Vec<isize>, String> {
+  // find the open interval above threshold
   let p1 =
     total_time / 2.0 - ((total_time.powi(2) - 4.0 * threshold).sqrt()) / 2.0;
   let p2 =
     total_time / 2.0 + ((total_time.powi(2) - 4.0 * threshold).sqrt()) / 2.0;
 
+  // bound to largest and smallest integer
   let lower_bound = (p1 + 1.0).floor() as isize;
   let upper_bound = (p2 - 1.0).ceil() as isize;
 
-  dbg!((lower_bound, upper_bound));
-
-  // Populate solutions within the open interval and filter values above threshold
+  // Populate solutions within the open interval
   Ok((lower_bound..=upper_bound).collect::<Vec<isize>>())
 }
 
 fn transform(data: Vec<(i64, i64)>) -> Result<Vec<Vec<isize>>, String> {
-  dbg!(&data);
   let mut result = vec![];
 
   for (time, threshold) in data {
@@ -111,16 +110,4 @@ fn load(result: Result<Vec<Vec<isize>>, String>) -> Result<(), String> {
   }
 
   Ok(())
-}
-
-
-#[cfg(test)]
-mod tests {
-  // use super::*;
-
-  // MARK extract
-
-  // MARK transform
-
-  // MARK load
 }
