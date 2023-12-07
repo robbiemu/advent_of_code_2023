@@ -9,6 +9,7 @@ const DATA: &str = include_str!("../sample-part2.txt");
 #[cfg(not(feature = "sample"))]
 const DATA: &str = include_str!("../input.txt");
 
+#[cfg(not(feature = "part2"))]
 #[derive(Debug, PartialOrd, Ord, PartialEq, Eq, Hash)]
 enum Card {
   Two,
@@ -21,6 +22,23 @@ enum Card {
   Nine,
   Ten,
   Jack,
+  Queen,
+  King,
+  Ace,
+}
+#[cfg(feature = "part2")]
+#[derive(Debug, PartialOrd, Ord, PartialEq, Eq, Hash)]
+enum Card {
+  Joker,
+  Two,
+  Three,
+  Four,
+  Five,
+  Six,
+  Seven,
+  Eight,
+  Nine,
+  Ten,
   Queen,
   King,
   Ace,
@@ -38,7 +56,12 @@ impl Card {
       '8' => Some(Card::Eight),
       '9' => Some(Card::Nine),
       'T' => Some(Card::Ten),
-      'J' => Some(Card::Jack),
+      'J' => {
+        #[cfg(not(feature = "part2"))]
+        return Some(Card::Jack);
+        #[cfg(feature = "part2")]
+        return Some(Card::Joker);
+      }
       'Q' => Some(Card::Queen),
       'K' => Some(Card::King),
       'A' => Some(Card::Ace),
@@ -61,25 +84,83 @@ enum HandType {
 impl HandType {
   fn from(hand: &Hand) -> Option<HandType> {
     let count = count_elements(hand);
-    match count.len() {
-      1 => Some(HandType::FiveOfAKind),
-      2 => {
-        if *count.values().max().unwrap_or(&0) == 4 {
-          Some(HandType::FourOfAKind)
-        } else {
-          Some(HandType::FullHouse)
+    #[cfg(not(feature = "part2"))]
+    {
+      match count.len() {
+        1 => Some(HandType::FiveOfAKind),
+        2 => {
+          if *count.values().max().unwrap_or(&0) == 4 {
+            Some(HandType::FourOfAKind)
+          } else {
+            Some(HandType::FullHouse)
+          }
         }
-      }
-      3 => {
-        if *count.values().max().unwrap_or(&0) == 3 {
-          Some(HandType::ThreeOfAKind)
-        } else {
-          Some(HandType::TwoPair)
+        3 => {
+          if *count.values().max().unwrap_or(&0) == 3 {
+            Some(HandType::ThreeOfAKind)
+          } else {
+            Some(HandType::TwoPair)
+          }
         }
+        4 => Some(HandType::OnePair),
+        5 => Some(HandType::HighCard),
+        _ => unreachable!(),
       }
-      4 => Some(HandType::OnePair),
-      5 => Some(HandType::HighCard),
-      _ => unreachable!(),
+    }
+    #[cfg(feature = "part2")]
+    {
+      match count.len() {
+        1 => Some(HandType::FiveOfAKind),
+        2 => {
+          if hand.contains(&Card::Joker) {
+            Some(HandType::FiveOfAKind)
+          } else if *count.values().max().unwrap_or(&0) == 4 {
+            Some(HandType::FourOfAKind)
+          } else {
+            Some(HandType::FullHouse)
+          }
+        }
+        3 => {
+          if hand.contains(&Card::Joker) {
+            let max_count = *count.values().max().unwrap_or(&0);
+            match max_count {
+              3 => Some(HandType::FourOfAKind),
+              2 => {
+                // Check if one pair involves a Joker
+                if count
+                  .iter()
+                  .any(|(&card, &count)| card == &Card::Joker && count == 2)
+                {
+                  Some(HandType::FourOfAKind) // Joker completes the other pair to form 4 of a kind
+                } else {
+                  // Joker completes either pair for a full house
+                  Some(HandType::FullHouse)
+                }
+              }
+              _ => unreachable!(),
+            }
+          } else if *count.values().max().unwrap_or(&0) == 3 {
+            Some(HandType::ThreeOfAKind)
+          } else {
+            Some(HandType::TwoPair)
+          }
+        }
+        4 => {
+          if hand.contains(&Card::Joker) {
+            Some(HandType::ThreeOfAKind)
+          } else {
+            Some(HandType::OnePair)
+          }
+        }
+        5 => {
+          if hand.contains(&Card::Joker) {
+            Some(HandType::OnePair)
+          } else {
+            Some(HandType::HighCard)
+          }
+        }
+        _ => unreachable!(),
+      }
     }
   }
 }
