@@ -1,3 +1,4 @@
+use num::integer::lcm;
 use petgraph::{
   graph::{DiGraph, NodeIndex},
   visit::EdgeRef,
@@ -8,13 +9,23 @@ use std::collections::{BTreeMap, HashSet};
 
 
 const DATA: &str = include_str!("../input.txt");
+#[cfg(not(feature = "part2"))]
 const START_NODE: &str = "AAA";
+#[cfg(not(feature = "part2"))]
 const TARGET_NODE: &str = "ZZZ";
 
+#[cfg(not(feature = "part2"))]
 #[derive(Debug)]
 struct ProblemDefinition {
   instructions: Vec<char>,
   root_index: NodeIndex,
+  graph: DiGraph<String, EdgeLabel>,
+}
+#[cfg(feature = "part2")]
+#[derive(Debug)]
+struct ProblemDefinition {
+  instructions: Vec<char>,
+  root_index: Vec<NodeIndex>,
   graph: DiGraph<String, EdgeLabel>,
 }
 
@@ -54,7 +65,10 @@ fn extract() -> Result<ProblemDefinition, String> {
 
   let mut graph = DiGraph::new();
   let mut node_indices = BTreeMap::new();
+  #[cfg(not(feature = "part2"))]
   let mut root_node_index = None;
+  #[cfg(feature = "part2")]
+  let mut root_node_index = Vec::new();
   for line in lines.skip(1) {
     if let Ok((node, left, right)) = sscanf!(line, "{str} = ({str}, {str})") {
       // Add nodes if they don't exist
@@ -76,31 +90,73 @@ fn extract() -> Result<ProblemDefinition, String> {
 
       graph.add_edge(node_index, left_index, edge_label_left);
       graph.add_edge(node_index, right_index, edge_label_right);
-      if node == "AAA" {
+      #[cfg(not(feature = "part2"))]
+      if node == START_NODE {
         root_node_index = Some(node_index);
+      }
+      #[cfg(feature = "part2")]
+      if node.ends_with('A') {
+        root_node_index.push(node_index);
       }
     } else {
       return Err(format!("Failed to parse line\n{line}"));
     }
   }
 
+  #[cfg(not(feature = "part2"))]
   if let Some(root_index) = root_node_index {
     Ok(ProblemDefinition { instructions, root_index, graph })
   } else {
     Err("No root node found".to_string())
   }
+  #[cfg(feature = "part2")]
+  Ok(ProblemDefinition { instructions, root_index: root_node_index, graph })
 }
 
 fn transform(data: ProblemDefinition) -> Result<usize, String> {
-  let instruction_stream = data.instructions.iter().cycle();
-  let mut node_index = data.root_index;
+  #[cfg(not(feature = "part2"))]
+  {
+    let mut node_index = data.root_index;
+    return traverse(&node_index, &data.instructions, &data.graph);
+  }
+  #[cfg(feature = "part2")]
+  {
+    let mut path_lengths = Vec::new();
+    for node_index in data.root_index {
+      let traversal = traverse(&node_index, &data.instructions, &data.graph);
+      match traversal {
+        Ok(steps) => path_lengths.push(steps),
+        Err(e) => return Err(e),
+      };
+    }
+
+    match get_lcm(path_lengths) {
+      Some(lim) => Ok(lim),
+      None => Err("no lcm in paths".to_string()),
+    }
+  }
+}
+
+fn traverse(
+  starting_node: &NodeIndex,
+  instructions: &[char],
+  graph: &DiGraph<String, EdgeLabel>,
+) -> Result<usize, String> {
+  let mut node_index = *starting_node;
+  let len = instructions.len();
+  let instruction_stream = instructions.iter().cycle();
   let mut visited = HashSet::new();
   for (hops, instruction) in instruction_stream.enumerate() {
-    if data.graph[node_index] == TARGET_NODE {
+    #[cfg(not(feature = "part2"))]
+    if graph[node_index] == TARGET_NODE {
+      return Ok(hops);
+    }
+    #[cfg(feature = "part2")]
+    if graph[node_index].ends_with('Z') {
       return Ok(hops);
     }
 
-    let key = (hops % data.instructions.len(), node_index);
+    let key = (hops % len, node_index);
     if visited.contains(&key) {
       return Err("infinite loop found".to_string());
     }
@@ -112,8 +168,7 @@ fn transform(data: ProblemDefinition) -> Result<usize, String> {
       _ => return Err(format!("invalid instruction in stream: {instruction}")),
     };
 
-    let edge_references =
-      data.graph.edges_directed(node_index, Direction::Outgoing);
+    let edge_references = graph.edges_directed(node_index, Direction::Outgoing);
     for edge in edge_references {
       let edge_label = edge.weight();
       if *edge_label == label {
@@ -125,6 +180,23 @@ fn transform(data: ProblemDefinition) -> Result<usize, String> {
   }
 
   unreachable!()
+}
+
+
+pub fn get_lcm<T: AsRef<[usize]>>(numbers: T) -> Option<usize> {
+  let slice = numbers.as_ref();
+
+  if slice.is_empty() {
+    return None;
+  }
+
+  let mut result = slice[0];
+
+  for &number in slice[1..].iter() {
+    result = lcm(result, number);
+  }
+
+  Some(result)
 }
 
 fn load(result: Result<usize, String>) -> Result<(), String> {
