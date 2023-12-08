@@ -215,6 +215,7 @@ mod tests {
 
   const SAMPLE_DATA_1: &str = include_str!("../sample_1.txt");
   const SAMPLE_DATA_2: &str = include_str!("../sample_2.txt");
+  const SAMPLE_DATA_3: &str = include_str!("../sample_3.txt");
 
   // MARK extract
   #[test]
@@ -229,10 +230,24 @@ mod tests {
   }
 
   // MARK transform
+  #[cfg(not(feature = "part2"))]
   #[test]
   #[mry::lock(src_provider)]
   fn it_should_find_route_to_target_node() {
     mock_src_provider().returns(Ok(SAMPLE_DATA_2.to_string()));
+
+    let data = extract();
+    assert!(data.is_ok());
+    let result = transform(data.unwrap());
+    assert!(result.is_ok());
+    assert_eq!(result.unwrap(), 6);
+  }
+
+  #[cfg(feature = "part2")]
+  #[test]
+  #[mry::lock(src_provider)]
+  fn it_should_find_route_to_target_node() {
+    mock_src_provider().returns(Ok(SAMPLE_DATA_3.to_string()));
 
     let data = extract();
     assert!(data.is_ok());
