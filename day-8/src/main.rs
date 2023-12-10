@@ -214,7 +214,9 @@ mod tests {
   use super::*;
 
   const SAMPLE_DATA_1: &str = include_str!("../sample_1.txt");
+  #[cfg(not(feature = "part2"))]
   const SAMPLE_DATA_2: &str = include_str!("../sample_2.txt");
+  #[cfg(feature = "part2")]
   const SAMPLE_DATA_3: &str = include_str!("../sample_3.txt");
 
   // MARK extract
