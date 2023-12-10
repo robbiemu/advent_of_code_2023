@@ -3,6 +3,10 @@ const DATA: &str = include_str!("../sample.txt");
 #[cfg(not(feature = "sample"))]
 const DATA: &str = include_str!("../input.txt");
 
+struct ProblemDefinition {}
+type Consequent = String;
+
+
 fn main() -> Result<(), String> {
   let data = extract()?;
   let result = transform(data);
@@ -15,16 +19,15 @@ fn src_provider() -> Result<String, String> {
   Ok(DATA.to_string())
 }
 
-fn extract() -> Result<T, String> {
+fn extract() -> Result<ProblemDefinition, String> {
   todo!()
 }
 
-fn transform(mut data: T) -> Result<U, String> {
+fn transform(_data: ProblemDefinition) -> Result<Consequent, String> {
   todo!()
 }
 
-
-fn load(result: Result<U, String>) -> Result<(), String> {
+fn load(_result: Result<Consequent, String>) -> Result<(), String> {
   todo!()
 }
 
