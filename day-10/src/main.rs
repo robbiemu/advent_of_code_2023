@@ -28,7 +28,46 @@ struct Neighbors {
 }
 
 impl Neighbors {
-  fn get_connections(&self) -> impl Iterator<Item = Coord> {
+  fn get_neighbors_connected_by_coord(
+    board: &[Vec<char>],
+    coord: &Coord,
+  ) -> Neighbors {
+    let mut neighbors =
+      Neighbors { north: None, east: None, south: None, west: None };
+
+    if coord.y > 0
+      && (board[coord.y][coord.x] == '|'
+        || board[coord.y][coord.x] == 'L'
+        || board[coord.y][coord.x] == 'J')
+    {
+      neighbors.north = Some(Coord { y: coord.y - 1, x: coord.x });
+    }
+    if coord.x < board[0].len() - 1
+      && (board[coord.y][coord.x] == '-'
+        || board[coord.y][coord.x] == 'L'
+        || board[coord.y][coord.x] == 'F')
+    {
+      neighbors.east = Some(Coord { y: coord.y, x: coord.x + 1 });
+    }
+    if coord.y < board.len() - 1
+      && (board[coord.y][coord.x] == '|'
+        || board[coord.y][coord.x] == '7'
+        || board[coord.y][coord.x] == 'F')
+    {
+      neighbors.south = Some(Coord { y: coord.y + 1, x: coord.x });
+    }
+    if coord.x > 0
+      && (board[coord.y][coord.x] == '-'
+        || board[coord.y][coord.x] == 'J'
+        || board[coord.y][coord.x] == '7')
+    {
+      neighbors.west = Some(Coord { y: coord.y, x: coord.x - 1 });
+    }
+
+    neighbors
+  }
+
+  fn iter_coords(&self) -> impl Iterator<Item = Coord> {
     let mut connected = Vec::new();
     if let Some(coord) = self.north {
       connected.push(coord);
@@ -138,7 +177,6 @@ fn resolve_start_character(board: &[Vec<char>], start: &Coord) -> Option<char> {
     }),
   };
 
-  dbg!(connections, connections.get_connected_directions());
   let connected_directions = connections.get_connected_directions();
 
   match connected_directions.len() {
@@ -206,16 +244,15 @@ fn extract() -> Result<ProblemDefinition, String> {
 
 fn transform(data: ProblemDefinition) -> Result<Consequent, String> {
   let mut step_map = HashMap::new();
-  let mut queue = VecDeque::from([data.start]);
-  let mut steps = 0;
-  while let Some(step) = queue.pop_front() {
-    steps += 1;
-    let neighbors = get_neighbors(&data.board, &step);
-    neighbors.get_connections().for_each(|c| {
+  let mut queue = VecDeque::from([(0, data.start)]);
+  while let Some((step, coord)) = queue.pop_front() {
+    let neighbors =
+      Neighbors::get_neighbors_connected_by_coord(&data.board, &coord);
+    neighbors.iter_coords().for_each(|c| {
       if !step_map.contains_key(&c) {
-        queue.push_back(c);
+        queue.push_back((step + 1, c));
       }
-      step_map.insert(c, steps);
+      step_map.insert(c, step);
     });
   }
 
