@@ -48,15 +48,15 @@ fn transform(data: &[Vec<isize>]) -> Result<Vec<isize>, String> {
             series.windows(2).map(|w| w[1] - w[0]).collect();
           stack.push(differences);
         }
-        // dbg!(stack
-        //   .iter()
-        //   .rev()
-        //   .map(|l| l
-        //     .iter()
-        //     .map(|i| i.to_string())
-        //     .collect::<Vec<_>>()
-        //     .join(" "))
-        //   .collect::<Vec<_>>());
+        dbg!(stack
+          .iter()
+          .rev()
+          .map(|l| l
+            .iter()
+            .map(|i| i.to_string())
+            .collect::<Vec<_>>()
+            .join(" "))
+          .collect::<Vec<_>>());
 
         let mut prev_diff = 0;
         for i in (0..stack.len()).rev() {
