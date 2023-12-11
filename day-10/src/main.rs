@@ -2,6 +2,7 @@
 use std::collections::HashMap;
 use std::collections::{HashSet, VecDeque};
 
+
 #[cfg(feature = "sample")]
 #[cfg(not(feature = "part2"))]
 const DATA: &str = include_str!("../sample.txt");
