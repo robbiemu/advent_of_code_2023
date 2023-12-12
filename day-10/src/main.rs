@@ -2,6 +2,7 @@
 use std::collections::HashMap;
 use std::collections::{HashSet, VecDeque};
 
+
 #[cfg(feature = "sample")]
 #[cfg(not(feature = "part2"))]
 const DATA: &str = include_str!("../sample.txt");
@@ -268,7 +269,7 @@ fn extract() -> Result<ProblemDefinition, String> {
   Ok(ProblemDefinition { board, start })
 }
 
-fn flood_fill(
+fn traverse(
   width: usize,
   height: usize,
   loop_coords: HashSet<Coord>,
@@ -347,7 +348,9 @@ fn transform(data: ProblemDefinition) -> Result<Consequent, String> {
     let height = data.board.len();
     let width = data.board[0].len();
 
-    // Adjust loop coordinates to include new '.' cells
+    // We will expand the grid, so it now contains a virtual coord between/beside each coord
+
+    // Adjust loop coordinates to include virtual '.' cells
     let mut new_largest_loop = HashSet::new();
     for original_coord in &largest_loop {
       let coord =
@@ -369,10 +372,10 @@ fn transform(data: ProblemDefinition) -> Result<Consequent, String> {
 
     // find all points in the larger board that are inside
     let enlarged_inside =
-      flood_fill(width * 2 + 1, height * 2 + 1, new_largest_loop);
+      traverse(width * 2 + 1, height * 2 + 1, new_largest_loop);
     let inside_positions = enlarged_inside
       .iter()
-      .filter(|coord| coord.x % 2 != 0 && coord.y % 2 != 0)
+      .filter(|coord| coord.x % 2 != 0 && coord.y % 2 != 0) // remove the virtual coords
       .map(|c| Coord { y: (c.y - 1) / 2, x: (c.x - 1) / 2 }) // get the original coordinate
       .collect::<HashSet<_>>();
 
