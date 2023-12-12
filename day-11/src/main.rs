@@ -1,11 +1,16 @@
 use itertools::Itertools;
-use std::{fmt::Debug, iter::repeat};
+use std::fmt::Debug;
+#[cfg(not(feature = "part2"))]
+use std::iter::repeat;
 
 
 #[cfg(feature = "sample")]
 const DATA: &str = include_str!("../sample.txt");
 #[cfg(not(feature = "sample"))]
 const DATA: &str = include_str!("../input.txt");
+
+#[cfg(feature = "part2")]
+const HUBBLE_CONSTANT: usize = 999_999;
 
 enum Rotation {
   Clockwise,
@@ -101,6 +106,7 @@ fn rotate_matrix(matrix: &mut Vec<Vec<bool>>, direction: Rotation) {
   }
 }
 
+#[cfg(not(feature = "part2"))]
 fn insert_rows(grid: &mut Vec<Vec<bool>>, mut indices: Vec<usize>) {
   // Sort the indices in descending order to safely insert new rows without affecting the positions of existing ones.
   indices.sort_unstable_by(|a, b| b.cmp(a));
@@ -113,8 +119,8 @@ fn insert_rows(grid: &mut Vec<Vec<bool>>, mut indices: Vec<usize>) {
   }
 }
 
-fn expand_galaxy(data: &mut ProblemDefinition) {
-  let rows = data
+fn get_expanding_rows(data: &mut ProblemDefinition) -> Vec<usize> {
+  data
     .iter()
     .enumerate()
     .filter_map(|(y, row)| {
@@ -124,20 +130,23 @@ fn expand_galaxy(data: &mut ProblemDefinition) {
         None
       }
     })
-    .collect();
+    .collect()
+}
+
+fn get_expanding_cols(data: &mut ProblemDefinition) -> Vec<usize> {
+  rotate_matrix(data, Rotation::Clockwise);
+  let cols = get_expanding_rows(data);
+  rotate_matrix(data, Rotation::CounterClockwise);
+
+  cols
+}
+
+#[cfg(not(feature = "part2"))]
+fn expand_galaxy(data: &mut ProblemDefinition) {
+  let rows = get_expanding_rows(data);
   insert_rows(data, rows);
   rotate_matrix(data, Rotation::Clockwise);
-  let cols = data
-    .iter()
-    .enumerate()
-    .filter_map(|(y, row)| {
-      if row.iter().all(|item| !item) {
-        Some(y)
-      } else {
-        None
-      }
-    })
-    .collect();
+  let cols = get_expanding_cols(data);
   insert_rows(data, cols);
 }
 
@@ -157,22 +166,58 @@ fn locate_stars(galaxy: &[Vec<bool>]) -> Vec<Coord> {
     .collect()
 }
 
+#[cfg(feature = "part2")]
+fn count_items_between(indices: &[usize], left: usize, right: usize) -> usize {
+  let (lower, higher) = if left < right {
+    (left, right)
+  } else {
+    (right, left)
+  };
+
+  let mut count = 0;
+
+  for &index in indices {
+    if index > lower && index < higher {
+      count += 1;
+    }
+  }
+
+
+  count
+}
+
 fn transform(data: &mut ProblemDefinition) -> Result<Consequent, String> {
-  expand_galaxy(data);
-  dbg!(data
-    .iter()
-    .map(|r| r
+  #[cfg(not(feature = "part2"))]
+  {
+    expand_galaxy(data);
+    dbg!(data
       .iter()
-      .map(|p| if *p { '#' } else { '.' })
-      .collect::<String>())
-    .collect::<Vec<_>>());
+      .map(|r| r
+        .iter()
+        .map(|p| if *p { '#' } else { '.' })
+        .collect::<String>())
+      .collect::<Vec<_>>());
+  }
   let stars = locate_stars(data);
+  #[cfg(feature = "part2")]
+  let (expanding_rows, expanding_cols) =
+    (get_expanding_rows(data), get_expanding_cols(data));
   let distances = stars
     .into_iter()
     .combinations(2)
     .collect::<Vec<_>>()
     .iter()
-    .map(|v| v[0].manhattan_distance(&v[1]))
+    .map(|v| {
+      #[allow(unused_mut)]
+      let mut d = v[0].manhattan_distance(&v[1]);
+      #[cfg(feature = "part2")]
+      {
+        let rows_between = count_items_between(&expanding_rows, v[0].y, v[1].y);
+        let cols_between = count_items_between(&expanding_cols, v[0].x, v[1].x);
+        d += rows_between * HUBBLE_CONSTANT + cols_between * HUBBLE_CONSTANT;
+      }
+      d
+    })
     .collect();
 
   Ok(distances)
