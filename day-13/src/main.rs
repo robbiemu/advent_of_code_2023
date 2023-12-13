@@ -46,16 +46,46 @@ fn get_vertical_inflection_point(matrix: &[Vec<u8>]) -> Option<usize> {
   let ncols = matrix[0].len();
 
   (0..=ncols - 2).find(|&i| {
-    let j = i + 1;
     let mut symmetry_found = true;
+    let j = i + 1;
 
-    for k in 0..=i {
-      if j + k >= ncols {
-        break;
+    #[cfg(not(feature = "part2"))]
+    {
+      for k in 0..=i {
+        if j + k >= ncols {
+          break;
+        }
+        if matrix.iter().any(|row| row[i - k] != row[j + k]) {
+          symmetry_found = false;
+          break;
+        }
       }
-      if matrix.iter().any(|row| row[i - k] != row[j + k]) {
-        symmetry_found = false;
-        break;
+    }
+    #[cfg(feature = "part2")]
+    {
+      symmetry_found = false;
+      let mut diff_count = 0;
+
+      for k in 0..=i {
+        if j + k >= ncols {
+          break;
+        }
+        let current_difference = matrix.iter().fold(0, |acc, row| {
+          if row[i - k] != row[j + k] {
+            acc + 1
+          } else {
+            acc
+          }
+        });
+        diff_count += current_difference;
+        match diff_count {
+          1 => symmetry_found = true,
+          c if c > 1 => {
+            symmetry_found = false;
+            break;
+          }
+          _ => {} // No action for other cases
+        }
       }
     }
 
@@ -67,27 +97,53 @@ fn get_horizontal_inflection_point(matrix: &[Vec<u8>]) -> Option<usize> {
   let nrows = matrix.len();
 
   (0..=nrows - 2).find(|&i| {
-    let j = i + 1;
     let mut symmetry_found = true;
+    let j = i + 1;
 
-    for k in 0..=i {
-      if j + k >= nrows {
-        break;
+    #[cfg(not(feature = "part2"))]
+    {
+      for k in 0..=i {
+        if j + k >= nrows {
+          break;
+        }
+        if matrix[i - k]
+          .iter()
+          .zip(&matrix[j + k])
+          .any(|(a, b)| a != b)
+        {
+          symmetry_found = false;
+          break;
+        }
       }
-      if matrix[i - k]
-        .iter()
-        .zip(&matrix[j + k])
-        .any(|(a, b)| a != b)
-      {
-        symmetry_found = false;
-        break;
+    }
+    #[cfg(feature = "part2")]
+    {
+      symmetry_found = false;
+      let mut diff_count = 0;
+
+      for k in 0..=i {
+        if j + k >= nrows {
+          break;
+        }
+        let current_difference = matrix[i - k]
+          .iter()
+          .zip(&matrix[j + k])
+          .fold(0, |acc, (&a, &b)| if a != b { acc + 1 } else { acc });
+        diff_count += current_difference;
+        match diff_count {
+          1 => symmetry_found = true,
+          c if c > 1 => {
+            symmetry_found = false;
+            break;
+          }
+          _ => {}
+        }
       }
     }
 
     symmetry_found
   })
 }
-
 
 fn get_inflection(matrix: &[Vec<u8>]) -> Option<(usize, Symmetry)> {
   if let Some(point) = get_horizontal_inflection_point(matrix) {
@@ -108,9 +164,6 @@ fn transform(data: ProblemDefinition) -> Result<Consequent, String> {
     };
     results.push((inflection_point, symmetry));
   }
-
-
-  dbg!(&results);
 
   Ok(results)
 }
