@@ -46,11 +46,12 @@ fn get_vertical_inflection_point(matrix: &[Vec<u8>]) -> Option<usize> {
   let ncols = matrix[0].len();
 
   (0..=ncols - 2).find(|&i| {
-    let mut symmetry_found = true;
+    let mut symmetry_found;
     let j = i + 1;
 
     #[cfg(not(feature = "part2"))]
     {
+      symmetry_found = true;
       for k in 0..=i {
         if j + k >= ncols {
           break;
@@ -97,11 +98,12 @@ fn get_horizontal_inflection_point(matrix: &[Vec<u8>]) -> Option<usize> {
   let nrows = matrix.len();
 
   (0..=nrows - 2).find(|&i| {
-    let mut symmetry_found = true;
+    let mut symmetry_found;
     let j = i + 1;
 
     #[cfg(not(feature = "part2"))]
     {
+      symmetry_found = true;
       for k in 0..=i {
         if j + k >= nrows {
           break;
