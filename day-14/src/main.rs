@@ -90,11 +90,10 @@ fn transform(data: ProblemDefinition) -> Result<Consequent, String> {
       if memo.contains_key(&key) {
         let k = memo.keys().position(|&k| k == key).unwrap();
         let loop_len = iterations - k;
+        let loop_offset = ((STEPS - iterations) % loop_len) - 1;
+        let final_entry = memo.get_index(k + loop_offset).unwrap();
 
-        let long_pos = (STEPS - iterations) % loop_len;
-        let final_entry = memo.get_index(k + long_pos - 1).unwrap();
         board = final_entry.1.to_owned();
-
         break_point = iterations;
         break;
       }
