@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 mry = "^0.2"
 ndarray = "^0.15"
-memoize = "^0.4"
+indexmap = "^2.1"
 
 [features]
 sample = []

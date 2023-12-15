@@ -22,7 +22,6 @@ pub mod prelude {
   }
 }
 
-use memoize::memoize;
 use ndarray::{s, Array2, Slice};
 
 use prelude::*;
@@ -59,12 +58,12 @@ fn get_slice(
       }
     }
     CardinalDirection::East => {
-      let slice = Slice::from(x..board.shape()[1]);
+      let slice = Slice::from(x + 1..board.shape()[1]);
 
       board.slice(s![y, slice]).iter().cloned().collect()
     }
     CardinalDirection::South => {
-      let slice = Slice::from(y..board.shape()[0]);
+      let slice = Slice::from(y + 1..board.shape()[0]);
       board.slice(s![slice, x]).iter().cloned().collect()
     }
     CardinalDirection::West => {
@@ -104,7 +103,6 @@ fn move_rock(
   board[(new_y, new_x)] = b'O';
 }
 
-#[memoize]
 pub fn rotate_board(
   board: Array2<u8>,
   direction: CardinalDirection,
@@ -113,17 +111,11 @@ pub fn rotate_board(
   let mut rocks = find_positions(&board, b'O');
   sort_positions(&mut rocks, direction);
   for (y, x) in rocks.iter() {
-    // eprintln!("moving (y{y}, x{x})");
     let slice = get_slice(&new_board, (*y, *x), direction);
-    // eprintln!(
-    //   "slice {:?}",
-    //   slice.iter().map(|c| *c as char).collect::<String>()
-    // );
     let pos = slice
       .iter()
       .position(|c| c != &b'.')
       .unwrap_or(if !slice.is_empty() { slice.len() } else { 0 });
-    // dbg!(pos);
     if pos > 0 {
       let Some(new_pos) = get_offset(pos, (*y, *x), direction) else {
         return None;
