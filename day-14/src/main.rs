@@ -1,5 +1,5 @@
 use indexmap::IndexMap;
-use ndarray::{Array2, Axis};
+use ndarray::Array2;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 
@@ -120,13 +120,6 @@ fn transform(data: ProblemDefinition) -> Result<Consequent, String> {
       break;
     }
   }
-
-  dbg!(iterations);
-
-  board.axis_iter(Axis(0)).for_each(|row| {
-    let chars: String = row.iter().map(|&r| char::from(r)).collect();
-    eprintln!("{}", chars);
-  });
 
   Ok(score(board))
 }
