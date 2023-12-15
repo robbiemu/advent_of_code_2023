@@ -68,7 +68,7 @@ fn get_slice(
     }
     CardinalDirection::West => {
       if x == 0 {
-        vec![]
+        Vec::new()
       } else {
         board
           .slice(s![y, Slice::from(0..x)])
