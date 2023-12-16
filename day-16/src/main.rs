@@ -143,18 +143,6 @@ impl BeamMap {
     let mut visited = HashMap::new();
     self.beam_dfs(y_u as i16, x_u as i16, &mut visited, direction);
 
-    // Debug print of the map with visited tiles marked as '#'
-    for (y, row) in self.map.outer_iter().enumerate() {
-      for (x, &tile) in row.iter().enumerate() {
-        if visited.contains_key(&(y as i16, x as i16)) {
-          print!("#");
-        } else {
-          print!("{}", tile as char);
-        }
-      }
-      println!();
-    }
-
     visited.len()
   }
 }
@@ -190,7 +178,42 @@ fn extract() -> Result<BeamMap, String> {
 }
 
 fn transform(data: BeamMap) -> Result<Consequent, String> {
-  Ok(data.count_visited_tiles(0, 0, Direction::Right))
+  #[cfg(not(feature = "part2"))]
+  {
+    Ok(data.count_visited_tiles(0, 0, Direction::Right))
+  }
+  #[cfg(feature = "part2")]
+  {
+    let rows = data.map.shape()[0];
+    let cols = data.map.shape()[1];
+
+    let mut max_count = 0;
+    // Iterate over top and bottom edge
+    for x in 0..cols {
+      let count = data.count_visited_tiles(0, x, Direction::Down);
+      if count > max_count {
+        max_count = count;
+      }
+      let count = data.count_visited_tiles(rows - 1, x, Direction::Up);
+      if count > max_count {
+        max_count = count;
+      }
+    }
+
+    // Iterate over left and right edge
+    for y in 0..rows {
+      let count = data.count_visited_tiles(y, 0, Direction::Right);
+      if count > max_count {
+        max_count = count;
+      }
+      let count = data.count_visited_tiles(y, cols - 1, Direction::Left);
+      if count > max_count {
+        max_count = count;
+      }
+    }
+
+    Ok(max_count)
+  }
 }
 
 fn load(result: Result<Consequent, String>) -> Result<(), String> {
