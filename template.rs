@@ -7,13 +7,6 @@ struct ProblemDefinition {}
 type Consequent = String;
 
 
-fn main() -> Result<(), String> {
-  let data = extract()?;
-  let result = transform(data);
-
-  load(result)
-}
-
 #[mry::mry]
 fn src_provider() -> Result<String, String> {
   Ok(DATA.to_string())
@@ -29,6 +22,13 @@ fn transform(_data: ProblemDefinition) -> Result<Consequent, String> {
 
 fn load(_result: Result<Consequent, String>) -> Result<(), String> {
   todo!()
+}
+
+fn main() -> Result<(), String> {
+  let data = extract()?;
+  let result = transform(data);
+
+  load(result)
 }
 
 
