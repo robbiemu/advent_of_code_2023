@@ -74,7 +74,8 @@ impl BeamMap {
     }
     let x = x_in as usize;
     let y = y_in as usize;
-    if x >= self.map.shape()[0] || y >= self.map.shape()[1] {
+    let shape = self.map.shape();
+    if x >= shape[0] || y >= shape[1] {
       return;
     }
     // visit
@@ -96,9 +97,9 @@ impl BeamMap {
       c if c == Mirror::CounterClockwise as u8 => {
         let (new_y, new_x, new_direction) = match heading {
           Direction::Right => (y_in - 1, x_in, Direction::Up),
-          Direction::Down => (y_in, x_in + 1, Direction::Right),
+          Direction::Up => (y_in, x_in + 1, Direction::Right),
           Direction::Left => (y_in + 1, x_in, Direction::Down),
-          Direction::Up => (y_in, x_in - 1, Direction::Left),
+          Direction::Down => (y_in, x_in - 1, Direction::Left),
         };
 
         self.beam_dfs(new_y, new_x, visited, new_direction);
@@ -106,9 +107,9 @@ impl BeamMap {
       c if c == Mirror::Clockwise as u8 => {
         let (new_y, new_x, new_direction) = match heading {
           Direction::Right => (y_in + 1, x_in, Direction::Down),
-          Direction::Down => (y_in, x_in - 1, Direction::Left),
+          Direction::Up => (y_in, x_in - 1, Direction::Left),
           Direction::Left => (y_in - 1, x_in, Direction::Up),
-          Direction::Up => (y_in, x_in + 1, Direction::Right),
+          Direction::Down => (y_in, x_in + 1, Direction::Right),
         };
 
         self.beam_dfs(new_y, new_x, visited, new_direction);
@@ -141,6 +142,18 @@ impl BeamMap {
   ) -> usize {
     let mut visited = HashMap::new();
     self.beam_dfs(y_u as i16, x_u as i16, &mut visited, direction);
+
+    // Debug print of the map with visited tiles marked as '#'
+    for (y, row) in self.map.outer_iter().enumerate() {
+      for (x, &tile) in row.iter().enumerate() {
+        if visited.contains_key(&(y as i16, x as i16)) {
+          print!("#");
+        } else {
+          print!("{}", tile as char);
+        }
+      }
+      println!();
+    }
 
     visited.len()
   }
@@ -305,7 +318,7 @@ mod tests {
     let beam_map = BeamMap { map };
     beam_map.beam_dfs(0, 2, &mut visited, Direction::Down);
 
-    assert!(visited.contains_key(&(2, 4)));
+    assert!(visited.contains_key(&(2, 0)));
     assert_eq!(visited.len(), 5);
   }
   #[test]
@@ -327,7 +340,7 @@ mod tests {
     let beam_map = BeamMap { map };
     beam_map.beam_dfs(4, 2, &mut visited, Direction::Up);
 
-    assert!(visited.contains_key(&(2, 0)));
+    assert!(visited.contains_key(&(2, 4)));
     assert_eq!(visited.len(), 5);
   }
 
