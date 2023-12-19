@@ -191,25 +191,17 @@ fn transform(data: BeamMap) -> Result<Consequent, String> {
     // Iterate over top and bottom edge
     for x in 0..cols {
       let count = data.count_visited_tiles(0, x, Direction::Down);
-      if count > max_count {
-        max_count = count;
-      }
+      max_count = max_count.max(count);
       let count = data.count_visited_tiles(rows - 1, x, Direction::Up);
-      if count > max_count {
-        max_count = count;
-      }
+      max_count = max_count.max(count);
     }
 
     // Iterate over left and right edge
     for y in 0..rows {
       let count = data.count_visited_tiles(y, 0, Direction::Right);
-      if count > max_count {
-        max_count = count;
-      }
+      max_count = max_count.max(count);
       let count = data.count_visited_tiles(y, cols - 1, Direction::Left);
-      if count > max_count {
-        max_count = count;
-      }
+      max_count = max_count.max(count);
     }
 
     Ok(max_count)
