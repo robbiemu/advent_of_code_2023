@@ -17,7 +17,7 @@ use crate::lib::path::update_record_with_path;
 
 
 #[cfg(feature = "sample")]
-const DATA: &str = include_str!("../sample.txt");
+const DATA: &str = include_str!("../sample3.txt");
 #[cfg(not(feature = "sample"))]
 const DATA: &str = include_str!("../input.txt");
 
@@ -37,6 +37,8 @@ impl FromStr for ProblemDefinition {
     let start = (0, 0);
     let end = (record.rows - 1, record.cols - 1);
     let map = get_map_from_record(&record);
+
+    dbg!(map.node_indices().len(), map.edge_indices().len());
 
     Ok(ProblemDefinition { map, record, start, end })
   }
@@ -60,8 +62,8 @@ fn transform(data: ProblemDefinition) -> Result<Consequent, String> {
     if p.is_none() {
       return Weight(*weight, *current);
     }
-    let Weight(_, previous) = p.unwrap().weight();
 
+    let Weight(_, previous) = p.unwrap().weight();
     if current != previous && Direction::invert(current) != *previous {
       Weight(*weight, *current)
     } else {
@@ -92,7 +94,7 @@ fn transform(data: ProblemDefinition) -> Result<Consequent, String> {
 
 fn load(result: Result<Consequent, String>) -> Result<(), String> {
   match result {
-    Ok(count) => println!("count {count}"),
+    Ok(heat_loss) => println!("heat_loss {heat_loss}"),
     Err(e) => eprintln!("{:?}", e),
   }
 

@@ -6,6 +6,7 @@ use std::collections::{
   hash_map::Entry::{Occupied, Vacant},
   BinaryHeap, HashMap,
 };
+use std::fmt::Debug;
 use std::hash::Hash;
 use std::ops::AddAssign;
 
@@ -53,10 +54,10 @@ pub fn dijkstra<G, F, K>(
 ) -> HashMap<G::NodeId, (K, Option<NodeIndex>)>
 where
   G: IntoEdges + IntoNodeIdentifiers + Visitable,
-  G::NodeId: Eq + Hash + Copy + Into<NodeIndex> + From<NodeIndex>,
+  G::NodeId: Eq + Hash + Copy + Debug + Into<NodeIndex> + From<NodeIndex>,
   G::EdgeId: Copy,
   F: FnMut(G::EdgeRef, Option<G::EdgeRef>) -> K,
-  K: Measure + Copy + AddAssign + Ord,
+  K: Measure + Copy + AddAssign + Ord + Debug,
 {
   let mut visited = graph.visit_map();
   let mut scores = HashMap::new();
@@ -66,17 +67,12 @@ where
   scores.insert(start, (zero_score, None));
   visit_next.push(MinScored(zero_score, start.into()));
   while let Some(MinScored(node_score, node)) = visit_next.pop() {
-    if visited.is_visited(&node.into()) {
-      continue;
-    }
+    println!("Popped node {:?} with score {:?}", node, node_score);
     if goal.as_ref() == Some(&node.into()) {
       break;
     }
     for edge in graph.edges(node.into()) {
       let next = edge.target();
-      if visited.is_visited(&next) {
-        continue;
-      }
       let mut next_score: K = node_score;
       next_score += edge_cost(
         edge,
@@ -91,12 +87,14 @@ where
           if next_score < *existing_score {
             *existing_score = next_score;
             ent.insert((next_score, Some(edge)));
+            println!("Pushing node {:?} with score {:?}", next, next_score);
             visit_next.push(MinScored(next_score, next.into()));
             predecessor.insert(next, node);
           }
         }
         Vacant(ent) => {
           ent.insert((next_score, Some(edge)));
+          println!("Pushing node {:?} with score {:?}", next, next_score);
           visit_next.push(MinScored(next_score, next.into()));
           predecessor.insert(next, node);
         }

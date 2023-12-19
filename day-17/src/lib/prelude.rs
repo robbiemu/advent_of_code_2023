@@ -1,5 +1,5 @@
 use petgraph::{Directed, Graph};
-use std::ops::AddAssign;
+use std::{cmp::Ordering, ops::AddAssign};
 
 use crate::lib::petgraph::etc::Measure;
 
@@ -57,7 +57,7 @@ impl Direction {
 
 pub type GraphMap = Graph<(usize, usize), Weight, Directed>;
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct Weight(pub u32, pub Direction);
 
 impl Measure for Weight {
@@ -66,9 +66,22 @@ impl Measure for Weight {
   }
 }
 
+impl PartialOrd for Weight {
+  fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+    Some(self.0.cmp(&other.0))
+  }
+}
+
+impl Ord for Weight {
+  fn cmp(&self, other: &Self) -> Ordering {
+    self.partial_cmp(other).unwrap_or(Ordering::Equal)
+  }
+}
+
 impl AddAssign for Weight {
   fn add_assign(&mut self, other: Self) {
     self.0 = self.0.saturating_add(other.0);
+    self.1 = other.1;
   }
 }
 
