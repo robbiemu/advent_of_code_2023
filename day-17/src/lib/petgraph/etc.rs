@@ -84,7 +84,7 @@ where
       match scores.entry(next) {
         Occupied(mut ent) => {
           let (existing_score, _) = ent.get_mut();
-          if next_score < *existing_score {
+          if next_score <= *existing_score {
             *existing_score = next_score;
             ent.insert((next_score, Some(edge)));
             println!("Pushing node {:?} with score {:?}", next, next_score);
