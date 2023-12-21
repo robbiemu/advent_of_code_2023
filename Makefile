@@ -17,4 +17,4 @@ day-%: check-aoc
 	cp template.rs $@/src/main.rs
 	echo "mry = \"^0.2\"\n\n[features]\nsample = []\npart2 = []" >> $@/Cargo.toml
 	touch $@/sample.txt
-	aoc --session-file $(AOC_SESSION_FILE) download --input-only --input-file $@/input.txt
+	aoc --session-file $(AOC_SESSION_FILE) download --day $* --input-only --input-file $@/input.txt
