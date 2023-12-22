@@ -12,6 +12,8 @@ const DATA: &str = include_str!("../input.txt");
 #[cfg(not(feature = "sample"))]
 #[cfg(not(feature = "part2"))]
 const STEPS: usize = 64;
+#[cfg(feature = "part2")]
+const STEPS: usize = 26501365;
 
 struct ProblemDefinition {
   map: Vec<Vec<char>>,
@@ -138,23 +140,32 @@ fn transform(data: ProblemDefinition) -> Result<Consequent, String> {
   }
   #[cfg(feature = "part2")]
   {
-    let n = (26501365 - (data.map[0].len() / 2)) / data.map[0].len();
+    // (verified) rows and cols are same in input.
+    let span = data.map.len();
+    // (verified) STEPS in part 2 chosen to evenly compose this many repeticiones
+    let n = (STEPS - (span / 2)) / span;
+    /* we need n of these pq are an even distance and there are n repetitions of
+    our map in a direction. these were excluded when they aught not to have been
+    (the diamond is not jaggigty at the scale of our whole map, but at tiles) */
     let excluded_even_positions = n
       * location_data
         .values()
-        .filter(|&distance| distance % 2 == 0 && distance > &65)
+        .filter(|&distance| distance % 2 == 0 && distance > &span)
         .count();
+    // but we need n+ 1 of these because these are an odd distance
     let excluded_odd_positions = (n + 1)
       * location_data
         .values()
-        .filter(|&distance| distance % 2 == 1 && distance > &65)
+        .filter(|&distance| distance % 2 == 1 && distance > &span)
         .count();
 
+    // we need n^2 here because there are two dimensions of expansion in an area.
     let evens = n.pow(2)
       * location_data
         .values()
         .filter(|&distance| distance % 2 == 0)
         .count();
+    // n + 1 because it is an odd distance
     let odds = (n + 1).pow(2)
       * location_data
         .values()
