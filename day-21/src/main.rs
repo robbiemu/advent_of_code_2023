@@ -5,17 +5,19 @@ use std::collections::{HashMap, VecDeque};
 #[cfg(feature = "sample")]
 const DATA: &str = include_str!("../sample.txt");
 #[cfg(feature = "sample")]
+#[cfg(not(feature = "part2"))]
 const STEPS: usize = 6;
 #[cfg(not(feature = "sample"))]
 const DATA: &str = include_str!("../input.txt");
 #[cfg(not(feature = "sample"))]
+#[cfg(not(feature = "part2"))]
 const STEPS: usize = 64;
 
 struct ProblemDefinition {
   map: Vec<Vec<char>>,
   start: Vector2<usize>,
 }
-type Consequent = Vec<Vector2<usize>>;
+type Consequent = usize;
 
 
 #[mry::mry]
@@ -95,47 +97,80 @@ fn get_location_distance(
 
 fn transform(data: ProblemDefinition) -> Result<Consequent, String> {
   let location_data = get_location_distance(&data);
-  let visitable: Vec<Vector2<usize>> = location_data
-    .iter()
-    .filter(|(&_, &distance)| {
-      distance <= STEPS && (distance % 2) == (STEPS % 2)
-    })
-    .map(|(pos, _)| pos.to_owned())
-    .collect();
+  #[cfg(not(feature = "part2"))]
+  {
+    let visitable: Vec<Vector2<usize>> = location_data
+      .iter()
+      .filter(|(&_, &distance)| {
+        distance <= STEPS && (distance % 2) == (STEPS % 2)
+      })
+      .map(|(pos, _)| pos.to_owned())
+      .collect();
 
-  // println!(
-  //   "{}",
-  //   data
-  //     .map
-  //     .iter()
-  //     .enumerate()
-  //     .map(|(y, row)| {
-  //       let r = row
-  //         .iter()
-  //         .enumerate()
-  //         .map(|(x, col)| {
-  //           if visitable.contains(&Vector2::new(x, y)) {
-  //             &'O'
-  //           } else {
-  //             col
-  //           }
-  //         })
-  //         .collect::<String>();
+    println!(
+      "{}",
+      data
+        .map
+        .iter()
+        .enumerate()
+        .map(|(y, row)| {
+          let r = row
+            .iter()
+            .enumerate()
+            .map(|(x, col)| {
+              if visitable.contains(&Vector2::new(x, y)) {
+                &'O'
+              } else {
+                col
+              }
+            })
+            .collect::<String>();
 
-  //       format!("{r}\n")
-  //     })
-  //     .collect::<String>()
-  // );
+          format!("{r}\n")
+        })
+        .collect::<String>()
+    );
 
-  match visitable.len() {
-    0 => Err("no visitable locations".to_string()),
-    _ => Ok(visitable),
+    match visitable.len() {
+      0 => Err("no visitable locations".to_string()),
+      _ => Ok(visitable.len()),
+    }
+  }
+  #[cfg(feature = "part2")]
+  {
+    let n = (26501365 - (data.map[0].len() / 2)) / data.map[0].len();
+    let excluded_even_positions = n
+      * location_data
+        .values()
+        .filter(|&distance| distance % 2 == 0 && distance > &65)
+        .count();
+    let excluded_odd_positions = (n + 1)
+      * location_data
+        .values()
+        .filter(|&distance| distance % 2 == 1 && distance > &65)
+        .count();
+
+    let evens = n.pow(2)
+      * location_data
+        .values()
+        .filter(|&distance| distance % 2 == 0)
+        .count();
+    let odds = (n + 1).pow(2)
+      * location_data
+        .values()
+        .filter(|&distance| distance % 2 == 1)
+        .count();
+
+    let positions =
+      evens + odds + excluded_even_positions - excluded_odd_positions;
+
+    Ok(positions)
   }
 }
 
 fn load(result: Result<Consequent, String>) -> Result<(), String> {
   match result {
-    Ok(positions) => println!("positions {}", positions.len()),
+    Ok(positions) => println!("positions {positions}"),
     Err(e) => eprintln!("{e}"),
   }
 
