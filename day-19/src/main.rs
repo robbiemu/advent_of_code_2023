@@ -20,7 +20,7 @@ struct Node {
 
 #[cfg(feature = "part2")]
 struct BooleanEvaluation {
-  category: char,
+  closure_name: char,
   operand: bool,
   value: usize,
   goal: String,
@@ -44,20 +44,20 @@ struct Workflow {
 #[cfg(not(feature = "part2"))]
 impl Workflow {
   fn create_rule(
-    category: char,
+    closure_name: char,
     is_greater_than: bool,
     value: usize,
     result: String,
   ) -> impl Fn(&Parts) -> Option<String> {
     move |x| {
-      let val = x.get(category);
-      let compare = if is_greater_than {
+      let val = x.get(closure_name);
+      let is_evaluated_true = if is_greater_than {
         val > value
       } else {
         val < value
       };
-      if compare {
-        Some(result.clone())
+      if is_evaluated_true {
+        Some(result.to_owned())
       } else {
         None
       }
@@ -113,21 +113,25 @@ fn extract() -> Result<ProblemDefinition, String> {
       .map(|line| {
         let mut key = String::new();
         let mut workflow = Workflow { rules: vec![], default: String::new() };
-        for (index, capture) in reg_rule.captures_iter(line).enumerate() {
+        for (index, spec) in reg_rule.captures_iter(line).enumerate() {
           if index == 0 {
-            key = capture[5].to_string();
+            key = spec[5].to_string();
             continue;
           }
-          if capture.get(1).is_some() {
-            let category = capture[1].chars().next().unwrap();
-            let operand = &capture[2];
-            let value = capture[3].parse::<usize>().unwrap();
-            let result = capture[4].to_string();
-            let rule =
-              Workflow::create_rule(category, operand == ">", value, result);
+          if spec.get(1).is_some() {
+            let closure_name = spec[1].chars().next().unwrap();
+            let operand = &spec[2];
+            let value = spec[3].parse::<usize>().unwrap();
+            let result = spec[4].to_string();
+            let rule = Workflow::create_rule(
+              closure_name,
+              operand == ">",
+              value,
+              result,
+            );
             workflow.rules.push(Box::new(rule));
           } else {
-            workflow.default = capture[5].to_string();
+            workflow.default = spec[5].to_string();
           }
         }
         (key, workflow)
@@ -153,24 +157,24 @@ fn extract() -> Result<ProblemDefinition, String> {
       .map(|line| {
         let mut node = Node { rules: vec![], default: String::new() };
         let mut name = String::new();
-        for (index, cap) in reg_rule.captures_iter(line).enumerate() {
+        for (index, spec) in reg_rule.captures_iter(line).enumerate() {
           if index == 0 {
-            name = cap[5].to_string();
+            name = spec[5].to_string();
             continue;
           }
-          if cap.get(1).is_some() {
-            let category = cap[1].chars().next().unwrap();
-            let operand = &cap[2] == ">";
-            let value = cap[3].parse::<usize>().unwrap();
-            let goal = cap[4].to_string();
+          if spec.get(1).is_some() {
+            let closure_name = spec[1].chars().next().unwrap();
+            let operand = &spec[2] == ">";
+            let value = spec[3].parse::<usize>().unwrap();
+            let goal = spec[4].to_string();
             node.rules.push(BooleanEvaluation {
-              category,
+              closure_name,
               operand,
               value,
               goal,
             });
           } else {
-            node.default = cap[5].to_string();
+            node.default = spec[5].to_string();
           }
         }
         (name, node)
@@ -192,6 +196,7 @@ fn dfs(
       * (range.m.1 - range.m.0 + 1)
       * (range.a.1 - range.a.0 + 1)
       * (range.s.1 - range.s.0 + 1);
+
     return total;
   } else if &current == "R" {
     return 0;
@@ -202,7 +207,7 @@ fn dfs(
 
   for rule in node.rules.iter() {
     let mut range_yes = range_no;
-    match rule.category {
+    match rule.closure_name {
       'x' => {
         if rule.operand {
           range_yes.x.0 = rule.value + 1;
@@ -244,6 +249,7 @@ fn dfs(
     total += dfs(map, rule.goal.clone(), range_yes);
   }
   total += dfs(map, node.default.clone(), range_no);
+
   total
 }
 
