@@ -1,3 +1,4 @@
+#[cfg(feature = "part2")]
 use num::integer::lcm;
 
 #[derive(Clone, Copy, Default, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -23,6 +24,7 @@ pub type Address = String;
 
 pub type State = u64;
 
+#[cfg(feature = "part2")]
 pub fn get_lcm<T: AsRef<[usize]>>(numbers: T) -> Option<usize> {
   let slice = numbers.as_ref();
 
