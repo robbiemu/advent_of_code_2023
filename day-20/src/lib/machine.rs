@@ -27,6 +27,10 @@ pub trait Machine: Stateful {
   fn get_address(&self) -> Address;
   fn get_type(&self) -> MachineType;
   fn on_signal(&mut self, signal: Signal) -> Option<Vec<Signal>>;
+  #[cfg(feature = "part2")]
+  fn reports_to(&self, address: &Address) -> bool;
+  #[cfg(feature = "part2")]
+  fn get_unique_outputs(&self, addresses: &[Address]) -> Vec<Address>;
 }
 
 pub trait Stateful {
@@ -43,6 +47,21 @@ impl FromNode for Broadcaster {
 }
 
 impl Machine for Broadcaster {
+  #[cfg(feature = "part2")]
+  fn reports_to(&self, address: &Address) -> bool {
+    self.0.output.contains(address)
+  }
+  #[cfg(feature = "part2")]
+  fn get_unique_outputs(&self, addresses: &[Address]) -> Vec<Address> {
+    self
+      .0
+      .output
+      .iter()
+      .filter(|item| !addresses.contains(item))
+      .cloned()
+      .collect()
+  }
+
   fn get_type(&self) -> MachineType {
     MachineType::Broadcaster
   }
@@ -64,7 +83,7 @@ impl Machine for Broadcaster {
         .map(|address| {
           let to = address.clone();
 
-          eprintln!("{} -{:?}-> {to}", self.0.address, signal.pulse);
+          // eprintln!("{} -{:?}-> {to}", self.0.address, signal.pulse);
 
           Signal { pulse: signal.pulse, to, ..Signal::default() }
         })
@@ -92,6 +111,21 @@ impl FromNode for FlipFlop {
 }
 
 impl Machine for FlipFlop {
+  #[cfg(feature = "part2")]
+  fn reports_to(&self, address: &Address) -> bool {
+    self.node.output.contains(address)
+  }
+  #[cfg(feature = "part2")]
+  fn get_unique_outputs(&self, addresses: &[Address]) -> Vec<Address> {
+    self
+      .node
+      .output
+      .iter()
+      .filter(|item| !addresses.contains(item))
+      .cloned()
+      .collect()
+  }
+
   fn get_type(&self) -> MachineType {
     MachineType::FlipFlop
   }
@@ -121,7 +155,7 @@ impl Machine for FlipFlop {
         .map(|address| {
           let to = address.clone();
 
-          eprintln!("%{} -{:?}-> {to}", self.node.address, pulse);
+          // eprintln!("%{} -{:?}-> {to}", self.node.address, pulse);
 
           Signal { pulse, to, ..Signal::default() }
         })
@@ -155,6 +189,21 @@ impl FromNode for Conjunction {
 }
 
 impl Machine for Conjunction {
+  #[cfg(feature = "part2")]
+  fn reports_to(&self, address: &Address) -> bool {
+    self.node.output.contains(address)
+  }
+  #[cfg(feature = "part2")]
+  fn get_unique_outputs(&self, addresses: &[Address]) -> Vec<Address> {
+    self
+      .node
+      .output
+      .iter()
+      .filter(|item| !addresses.contains(item))
+      .cloned()
+      .collect()
+  }
+
   fn get_type(&self) -> MachineType {
     MachineType::Conjunction
   }
@@ -186,7 +235,7 @@ impl Machine for Conjunction {
         .map(|address| {
           let to = address.clone();
 
-          eprintln!("&{} -{:?}-> {to}", self.node.address, pulse);
+          // eprintln!("&{} -{:?}-> {to}", self.node.address, pulse);
 
           Signal { pulse, to, ..Signal::default() }
         })
@@ -217,6 +266,21 @@ impl FromNode for Output {
 }
 
 impl Machine for Output {
+  #[cfg(feature = "part2")]
+  fn reports_to(&self, address: &Address) -> bool {
+    self.0.output.contains(address)
+  }
+  #[cfg(feature = "part2")]
+  fn get_unique_outputs(&self, addresses: &[Address]) -> Vec<Address> {
+    self
+      .0
+      .output
+      .iter()
+      .filter(|item| !addresses.contains(item))
+      .cloned()
+      .collect()
+  }
+
   fn get_type(&self) -> MachineType {
     MachineType::Output
   }

@@ -31,7 +31,6 @@ fn src_provider() -> Result<String, String> {
 }
 
 fn extract() -> Result<ProblemDefinition, String> {
-  // create a list of nodes
   let mut specifications: Vec<(MachineType, Node)> = Vec::new();
   for line in src_provider()?.lines() {
     let parts: Vec<&str> = line.split(" -> ").collect();
@@ -57,7 +56,7 @@ fn extract() -> Result<ProblemDefinition, String> {
 
     let node = Node {
       address,
-      input: Vec::new(), // You can fill this in later
+      input: Vec::new(), // we fill this in later
       output,
     };
 
@@ -67,6 +66,7 @@ fn extract() -> Result<ProblemDefinition, String> {
   let mut machines: Vec<Box<dyn Machine>> = Vec::new();
   for (machine_type, node) in specifications.iter() {
     let mut inputs: Vec<Address> = Vec::new();
+    // fill the input
     for (_, other_node) in specifications.iter() {
       if other_node.address == node.address {
         continue;
@@ -77,8 +77,6 @@ fn extract() -> Result<ProblemDefinition, String> {
         inputs.push(other_node.address.clone());
       }
     }
-
-    // Use inputs to update the node's inputs
     let mut updated_node = node.clone();
     updated_node.input = inputs;
 

@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 mry = "^0.2"
 indexmap = "2.1.0"
+num = "0.4.1"
 
 [features]
 sample = []
