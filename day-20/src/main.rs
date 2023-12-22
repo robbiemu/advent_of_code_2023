@@ -71,9 +71,7 @@ fn extract() -> Result<ProblemDefinition, String> {
       if other_node.address == node.address {
         continue;
       }
-      if other_node.output.contains(&node.address)
-        && other_node.address != node.address
-      {
+      if other_node.output.contains(&node.address) {
         inputs.push(other_node.address.clone());
       }
     }
@@ -100,7 +98,14 @@ fn extract() -> Result<ProblemDefinition, String> {
 }
 
 fn transform(mut data: ProblemDefinition) -> Result<Consequent, String> {
-  data.network.run(1000)
+  #[cfg(not(feature = "part2"))]
+  {
+    data.network.run(1000)
+  }
+  #[cfg(feature = "part2")]
+  {
+    data.network.run()
+  }
 }
 
 fn load(result: Result<Consequent, String>) -> Result<(), String> {

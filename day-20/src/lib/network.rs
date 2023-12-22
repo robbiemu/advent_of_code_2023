@@ -16,6 +16,7 @@ pub struct Network {
   input_memory: HashMap<Address, usize>,
   nodes: HashMap<Address, Box<dyn Machine>>,
   broadcaster: Option<Address>,
+  #[cfg(feature = "part2")]
   outputs: Vec<Address>,
   log: SignalLog,
   current_step: usize,
@@ -34,9 +35,13 @@ impl From<Vec<Box<dyn Machine>>> for Network {
       acc
     });
 
-    let mut outputs: Vec<Address> = Vec::new();
+    #[cfg(not(feature = "part2"))]
+    {
+      Network { nodes, broadcaster, ..Network::default() }
+    }
     #[cfg(feature = "part2")]
     {
+      let mut outputs: Vec<Address> = Vec::new();
       let addresses: Vec<Address> = nodes.keys().cloned().collect();
       let output = nodes.values().fold(None, |mut acc, node| {
         let node_outputs = node.get_unique_outputs(&addresses);
@@ -73,54 +78,54 @@ impl From<Vec<Box<dyn Machine>>> for Network {
             .collect();
         }
       }
-    }
 
-    Network { nodes, broadcaster, outputs, ..Network::default() }
+      Network { nodes, broadcaster, outputs, ..Network::default() }
+    }
   }
 }
 
 impl Network {
-  #[allow(unused_variables)]
+  #[cfg(not(feature = "part2"))]
   pub fn run(&mut self, n: usize) -> Result<(usize, usize), String> {
     if self.broadcaster.is_none() {
       return Err("no broadcaster in network".to_string());
     };
 
-    #[cfg(not(feature = "part2"))]
-    {
-      for i in 0..n {
-        self.current_step = i + 1;
-        if let Some(memoized_signal) = self.on_button_press()? {
-          eprintln!("cycle detected!");
-          self.adjust_count_to_cycle(memoized_signal, i + 1, n);
+    for i in 0..n {
+      self.current_step = i + 1;
+      if let Some(memoized_signal) = self.on_button_press()? {
+        eprintln!("cycle detected!");
+        self.adjust_count_to_cycle(memoized_signal, i + 1, n);
 
-          // Return early with adjusted log values
-          return Ok((self.log.low, self.log.high));
-        }
-
-        Ok((self.log.low, self.log.high))
+        // Return early with adjusted log values
+        return Ok((self.log.low, self.log.high));
       }
     }
 
-    #[cfg(feature = "part2")]
-    {
-      for i in 0..10000 {
-        self.current_step = i + 1;
-        if self.on_button_press()?.is_some() {
-          let lcm =
-            get_lcm(self.input_memory.values().copied().collect::<Vec<_>>())
-              .unwrap();
+    Ok((self.log.low, self.log.high))
+  }
 
-          return Ok((1, lcm));
-        }
+  #[cfg(feature = "part2")]
+  pub fn run(&mut self) -> Result<(usize, usize), String> {
+    if self.broadcaster.is_none() {
+      return Err("no broadcaster in network".to_string());
+    };
+
+    for i in 0..10000 {
+      self.current_step = i + 1;
+      if self.on_button_press()?.is_some() {
+        let lcm =
+          get_lcm(self.input_memory.values().copied().collect::<Vec<_>>())
+            .unwrap();
+
+        return Ok((1, lcm));
       }
-
-      Err("no cycle found".to_string())
     }
+
+    Err("no cycle found".to_string())
   }
 
   #[cfg(not(feature = "part2"))]
-  #[allow(unused_variables)]
   fn adjust_count_to_cycle(
     &mut self,
     memoized_signal: Signal,
@@ -128,7 +133,9 @@ impl Network {
     max_steps: usize,
   ) {
     let state = self.get_network_state();
-    let (j, _, (step, (prev_low, prev_high))) =
+    // let (j, _, (step, (prev_low, prev_high))) =
+    //   self.memory.get_full(&(memoized_signal, state)).unwrap();
+    let (_, _, (step, (prev_low, prev_high))) =
       self.memory.get_full(&(memoized_signal, state)).unwrap();
 
     let cycle_lows = self.log.low - prev_low;
